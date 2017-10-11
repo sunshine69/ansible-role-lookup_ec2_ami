@@ -16,9 +16,12 @@
 
 - name: create non-empty tags list
   set_fact:
-    ami_tags: "{{ ami_tags|default({})|combine({item.key: item.value}) }}"
+    lookup_ec2_ami_ami_search_tags: "{{ ami_search_tags|default({})|combine({item.key: item.value}) }}"
   with_dict: "{{ ami_search_tags }}"
   when: item.value
+
+- debug:
+    var: lookup_ec2_ami_ami_search_tags
 
 - name: find base AMI from id {{ ami_image }}
   ec2_ami_find:
@@ -40,7 +43,7 @@
   ec2_ami_find:
     region: "{{region}}"
     profile: "{{ profile|default(omit) }}"
-    ami_tags: "{{ ami_tags|default(omit) }}"
+    ami_tags: "{{ lookup_ec2_ami_ami_search_tags|default(omit) }}"
     sort: creationDate
     sort_order: descending
     sort_end: 1
