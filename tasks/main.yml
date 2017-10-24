@@ -18,10 +18,11 @@
   set_fact:
     lookup_ec2_ami_ami_search_tags: "{{ ami_search_tags|default({})|combine({item.key: item.value}) }}"
   with_dict: "{{ ami_search_tags }}"
-  when: item.value
+  when: ami_search_tags and item.value
 
 - debug:
     var: lookup_ec2_ami_ami_search_tags
+  when: ami_image is not defined or not ami_image
 
 - name: find base AMI from id {{ ami_image }}
   ec2_ami_find:
