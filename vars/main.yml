@@ -1,3 +1,0 @@
----
-# vars file for lookup_ec2_ami
-ami_tags: {}
