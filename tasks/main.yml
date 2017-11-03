@@ -24,7 +24,7 @@
   set_fact:
     lookup_ec2_ami_ami_search_tags: "{{ lookup_ec2_ami_ami_search_tags|combine({item.key: item.value}) }}"
   with_dict: "{{ ami_search_tags }}"
-  when: ami_search_tags and item.value
+  when: ami_search_tags is defined and ami_search_tags and item.value
 
 - debug:
     var: lookup_ec2_ami_ami_search_tags
