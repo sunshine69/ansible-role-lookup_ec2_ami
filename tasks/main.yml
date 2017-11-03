@@ -14,11 +14,17 @@
     - ami_image is not defined or not ami_image
     - ami_search_tags is not defined or not ami_search_tags
 
+  # lookup_ec2_ami role can run twice in same playbook!!
+  # Ensure it's empty before the second run
+- name: set lookup_ec2_ami_ami_search_tags to empty
+  set_fact:
+    lookup_ec2_ami_ami_search_tags: {}
+
 - name: create non-empty tags list
   set_fact:
-    lookup_ec2_ami_ami_search_tags: "{{ lookup_ec2_ami_ami_search_tags|default({})|combine({item.key: item.value}) }}"
+    lookup_ec2_ami_ami_search_tags: "{{ lookup_ec2_ami_ami_search_tags|combine({item.key: item.value}) }}"
   with_dict: "{{ ami_search_tags }}"
-  when: ami_search_tags and item.value
+  when: ami_search_tags is defined and ami_search_tags and item.value
 
 - debug:
     var: lookup_ec2_ami_ami_search_tags
