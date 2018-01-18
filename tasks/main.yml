@@ -49,7 +49,7 @@
 - name: Detect the latest ami image from {{ role_type }} in {{ env }}
   ec2_ami_find:
     region: "{{region}}"
-    profile: "{{ ami_search_profile if ami_search_profile else profile|default(omit) }}"
+    profile: "{{ ami_search_profile if ami_search_profile is defined and ami_search_profile else profile|default(omit) }}"
     ami_tags: "{{ lookup_ec2_ami_ami_search_tags|default(omit) }}"
     sort: creationDate
     sort_order: descending
