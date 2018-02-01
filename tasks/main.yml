@@ -7,6 +7,10 @@
     var: ami_search_tags
     verbosity: 2
 
+- debug:
+    var: ami_image
+    verbosity: 2
+
 - name: fail if ami_image or ami_search_tags not set
   fail:
     msg: Either ami_image or ami_search_tags must be set
@@ -14,20 +18,19 @@
     - ami_image is not defined or not ami_image
     - ami_search_tags is not defined or not ami_search_tags
 
-  # lookup_ec2_ami role can run twice in same playbook!!
-  # Ensure it's empty before the second run
-- name: set lookup_ec2_ami_ami_search_tags to empty
-  set_fact:
-    lookup_ec2_ami_ami_search_tags: {}
-
-- name: create non-empty tags list
-  set_fact:
-    lookup_ec2_ami_ami_search_tags: "{{ lookup_ec2_ami_ami_search_tags|combine({item.key: item.value}) }}"
-  with_dict: "{{ ami_search_tags }}"
-  when: ami_search_tags is defined and ami_search_tags and item.value
-
-- debug:
-    var: lookup_ec2_ami_ami_search_tags
+- block:
+    # lookup_ec2_ami role can run twice in same playbook!!
+    # Ensure it's empty before the second run
+    - name: set lookup_ec2_ami_ami_search_tags to empty
+      set_fact:
+        lookup_ec2_ami_ami_search_tags: {}
+    - name: create non-empty tags list
+      set_fact:
+        lookup_ec2_ami_ami_search_tags: "{{ lookup_ec2_ami_ami_search_tags|combine({item.key: item.value}) }}"
+      with_dict: "{{ ami_search_tags }}"
+      when: ami_search_tags is defined and ami_search_tags and item.value
+    - debug:
+        var: lookup_ec2_ami_ami_search_tags
   when: ami_image is not defined or not ami_image
 
 - name: find base AMI from id {{ ami_image }}
@@ -46,6 +49,14 @@
     ami: "{{ ami_find.results[0] }}"
   when: ami_find.results is defined and ami_find.results
 
+- debug:
+    var: ami_search_tags
+    verbosity: 2
+
+- debug:
+    var: ami_image
+    verbosity: 2
+
 - name: Detect the latest ami image from {{ role_type }} in {{ env }}
   ec2_ami_find:
     region: "{{region}}"
@@ -55,7 +66,7 @@
     sort_order: descending
     sort_end: 1
   register: ami_find
-  when: (ami_image is not defined or not ami_image) and ami_search_tags is defined and ami_search_tags
+  when: ami_image is not defined or not ami_image
 
 - name: set image fact
   set_fact:
