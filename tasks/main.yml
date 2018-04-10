@@ -44,6 +44,11 @@
   register: ami_find
   when: ami_image is defined and ami_image
 
+- name: fail when ami_image not found
+  fail:
+    msg: "Could not find AMI image {{ ami_image }}"
+  when: ami_find is not skipped and ami_find.results | length == 0
+
 - name: set image fact
   set_fact:
     ami: "{{ ami_find.results[0] }}"
