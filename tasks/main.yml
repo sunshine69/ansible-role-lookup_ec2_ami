@@ -38,7 +38,7 @@
         var: lookup_ec2_ami_ami_search_tags
         verbosity: 2
 
-    - name: Detect the latest ami image from {{ role_type }} in {{ env }}
+    - name: Detect the latest ami image {{ role_type|default('') }} in {{ env }}
       ec2_ami_find:
         region: "{{region}}"
         profile: "{{ ami_search_profile if ami_search_profile is defined and ami_search_profile else profile|default(omit) }}"
