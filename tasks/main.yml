@@ -6,14 +6,6 @@
 - debug:
     msg: "Role lookup_ec2_ami is called with following variables:"
 
-- debug:
-    var: ami_search_tags
-    verbosity: 2
-
-- debug:
-    var: ami_image
-    verbosity: 2
-
 - name: fail if ami_image or ami_search_tags not set
   fail:
     msg: Either ami_image or ami_search_tags must be set
@@ -21,7 +13,12 @@
     - ami_image is not defined or not ami_image
     - ami_search_tags is not defined or not ami_search_tags
 
+# Search by ami_search_tags
 - block:
+    - debug:
+        var: ami_search_tags
+        verbosity: 2
+
     # lookup_ec2_ami role can run twice in same playbook!!
     # Ensure it's empty before the second run
     - name: set lookup_ec2_ami_ami_search_tags to empty
@@ -54,7 +51,12 @@
       when: ami_find.results is defined and ami_find.results
   when: ami_image is not defined or not ami_image
 
+# Search by ami_image
 - block:
+    - debug:
+        var: ami_image
+        verbosity: 2
+
     - name: find base AMI from id {{ ami_image }}
       ec2_ami_find:
         ami_id: "{{ ami_image|default(omit) }}"
