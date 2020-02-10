@@ -36,7 +36,7 @@
         verbosity: 2
 
     - name: Detect the latest ami image {{ role_type|default('') }} in {{ env }}
-      ec2_ami_facts:
+      ec2_ami_info:
         region: "{{region}}"
         profile: "{{ ami_search_profile if ami_search_profile is defined and ami_search_profile else profile|default(omit) }}"
         filters: "{{ lookup_ec2_ami_ami_search_filters|default(omit) }}"
@@ -55,7 +55,7 @@
         verbosity: 2
 
     - name: find base AMI from id {{ ami_image }}
-      ec2_ami_facts:
+      ec2_ami_info:
         image_ids: "{{ ami_image|default(omit) }}"
         region: "{{region}}"
         profile: "{{ ami_search_profile if ami_search_profile is defined and ami_search_profile else profile|default(omit) }}"
