@@ -21,34 +21,31 @@
 
     # lookup_ec2_ami role can run twice in same playbook!!
     # Ensure it's empty before the second run
-    - name: set lookup_ec2_ami_ami_search_tags to empty
+    - name: set lookup_ec2_ami_ami_search_filters to empty
       set_fact:
-        lookup_ec2_ami_ami_search_tags: {}
+        lookup_ec2_ami_ami_search_filters: {}
 
-    - name: create non-empty tags list
+    - name: create filters based on ami_search_tags
       set_fact:
-        lookup_ec2_ami_ami_search_tags: "{{ lookup_ec2_ami_ami_search_tags|combine({item.key: item.value}) }}"
+        lookup_ec2_ami_ami_search_filters: '{{ lookup_ec2_ami_ami_search_filters|combine({"tag:"+ item.key: item.value}) }}'
       with_dict: "{{ ami_search_tags }}"
       when: ami_search_tags is defined and ami_search_tags and item.value
 
     - debug:
-        var: lookup_ec2_ami_ami_search_tags
+        var: lookup_ec2_ami_ami_search_filters
         verbosity: 2
 
     - name: Detect the latest ami image {{ role_type|default('') }} in {{ env }}
-      ec2_ami_find:
+      ec2_ami_info:
         region: "{{region}}"
         profile: "{{ ami_search_profile if ami_search_profile is defined and ami_search_profile else profile|default(omit) }}"
-        ami_tags: "{{ lookup_ec2_ami_ami_search_tags|default(omit) }}"
-        sort: creationDate
-        sort_order: descending
-        sort_end: 1
-      register: ami_find
+        filters: "{{ lookup_ec2_ami_ami_search_filters|default(omit) }}"
+      register: ec2_ami_facts_out
 
     - name: set image fact
       set_fact:
-        ami: "{{ ami_find.results[0] }}"
-      when: ami_find.results is defined and ami_find.results
+        ami: "{{ ec2_ami_facts_out.images|sort(attribute='creation_date')|last }}"
+      when: ec2_ami_facts_out.images is defined and ec2_ami_facts_out.images
   when: ami_image is not defined or not ami_image
 
 # Search by ami_image
@@ -58,23 +55,20 @@
         verbosity: 2
 
     - name: find base AMI from id {{ ami_image }}
-      ec2_ami_find:
-        ami_id: "{{ ami_image|default(omit) }}"
+      ec2_ami_info:
+        image_ids: "{{ ami_image|default(omit) }}"
         region: "{{region}}"
         profile: "{{ ami_search_profile if ami_search_profile is defined and ami_search_profile else profile|default(omit) }}"
-        sort: creationDate
-        sort_order: descending
-        sort_end: 1
       register: ami_find
       when: ami_image is defined and ami_image
 
     - name: fail when ami_image not found
       fail:
         msg: "Could not find AMI image {{ ami_image }}"
-      when: ami_find is not skipped and ami_find.results | length == 0
+      when: ami_find is not skipped and not ami_find.images
 
     - name: set image fact
       set_fact:
-        ami: "{{ ami_find.results[0] }}"
-      when: ami_find.results is defined and ami_find.results
+        ami: "{{ ami_find.images.0 }}"
+      when: ami_find.images is defined and ami_find.images
   when: ami_image is defined and ami_image
